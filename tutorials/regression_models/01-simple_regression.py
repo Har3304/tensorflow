@@ -10,7 +10,7 @@ X = tf.reshape(X, shape=(-1,1))
 y = tf.reshape(y, shape=(-1,1))
 
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(1, input_shape=(1,)) 
+    tf.keras.layers.Dense(10, input_shape=(1,)) 
 ])
 
 model.compile(loss='mae', optimizer=tf.keras.optimizers.Adam(learning_rate=0.1), metrics=['mae'])
