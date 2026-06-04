@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import joblib
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score, mean_absolute_percentage_error
+import plotly.graph_objects as go
+from IPython.display import display
+from plotly.subplots import make_subplots
+import time
+
 
 class BidirectionalLSTM():
   def __init__(self, csv, w=30, model_path=None, feature_scaler_path=None, target_scaler_path=None):
@@ -139,15 +144,49 @@ class BidirectionalLSTM():
         plt.title(col)
         plt.legend()
         plt.show()
+      
+  def simulate(self, delay=0.05):
+    if self.model is None:
+        self.model = tf.keras.models.load_model(self.model_path)
+    fig = go.FigureWidget(
+        make_subplots(rows=2, cols=2, subplot_titles=self.target_cols))
+    trace_map = {}
+    positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
+    for i, col in enumerate(self.target_cols):
+        row, col_num = positions[i]
+        fig.add_scatter(x=[], y=[], mode="lines", name=f"Actual {col}", row=row, col=col_num)
+        fig.add_scatter(x=[], y=[], mode="lines", name=f"Predicted {col}", row=row, col=col_num)
+        trace_map[i] = {"actual": len(fig.data) - 2, "pred": len(fig.data) - 1}
+        
+    fig.update_layout(height=800, width=1200, title="Live Weather Forecast Simulation")
+    display(fig)
 
-# To finetune and partial-train with new dataset on existing model
-# model = BidirectionalLSTM(csv="DailyDelhiClimateTrain.csv", w=30, model_path='bidirectional_weather_model.keras', feature_scaler_path='feature_scaler.pkl', target_scaler_path='target_scaler.pkl')
-# model.train(epochs=100, batch_size=32)
+    actual_x = [[] for _ in range(4)]
+    actual_y = [[] for _ in range(4)]
 
-# To train on new data and creating new model
-model = BidirectionalLSTM(csv="DailyDelhiClimateTrain.csv", w=30)
-model.train(epochs=100, batch_size=32)
+    pred_x = [[] for _ in range(4)]
+    pred_y = [[] for _ in range(4)]
 
-# To predict on a given dataset
-model = BidirectionalLSTM(csv="DailyDelhiClimateTest.csv", w=30, model_path='bidirectional_weather_model.keras', feature_scaler_path='feature_scaler.pkl', target_scaler_path='target_scaler.pkl')
-model.predict()
+    for step in range(len(self.X_seq)):
+        x = self.X_seq[step:step+1]
+        pred = self.model.predict(x, verbose=0)
+        pred = self.target_scaler.inverse_transform(pred)[0]
+
+        actual = self.target_scaler.inverse_transform(self.y_seq[step:step+1])[0]
+
+        with fig.batch_update():
+            for feature_idx in range(4):
+                actual_x[feature_idx].append(step)
+                actual_y[feature_idx].append(actual[feature_idx])
+
+                pred_x[feature_idx].append(step)
+                pred_y[feature_idx].append(pred[feature_idx])
+
+                fig.data[trace_map[feature_idx]["actual"]].x = actual_x[feature_idx]
+
+                fig.data[trace_map[feature_idx]["actual"]].y = actual_y[feature_idx]
+
+                fig.data[trace_map[feature_idx]["pred"]].x = pred_x[feature_idx]
+
+                fig.data[trace_map[feature_idx]["pred"]].y = pred_y[feature_idx]
+        time.sleep(delay)
