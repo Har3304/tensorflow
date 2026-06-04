@@ -139,3 +139,15 @@ class BidirectionalLSTM():
         plt.title(col)
         plt.legend()
         plt.show()
+
+# To finetune and partial-train with new dataset on existing model
+# model = BidirectionalLSTM(csv="DailyDelhiClimateTrain.csv", w=30, model_path='bidirectional_weather_model.keras', feature_scaler_path='feature_scaler.pkl', target_scaler_path='target_scaler.pkl')
+# model.train(epochs=100, batch_size=32)
+
+# To train on new data and creating new model
+model = BidirectionalLSTM(csv="DailyDelhiClimateTrain.csv", w=30)
+model.train(epochs=100, batch_size=32)
+
+# To predict on a given dataset
+model = BidirectionalLSTM(csv="DailyDelhiClimateTest.csv", w=30, model_path='bidirectional_weather_model.keras', feature_scaler_path='feature_scaler.pkl', target_scaler_path='target_scaler.pkl')
+model.predict()
