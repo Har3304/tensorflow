@@ -1,3 +1,4 @@
+import pickle
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -93,3 +94,7 @@ loss, accuracy = model.evaluate(
 )
 
 print('\nTest Accuracy:', accuracy)
+
+with open("sentiment_tokenizer.pkl", "wb") as f:
+    pickle.dump(tokenizer, f)
+tf.keras.models.save_model(model, 'sentiment_predicion_nlp_model.keras')
