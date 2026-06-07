@@ -25,8 +25,8 @@ sequences_test = tokenizer.texts_to_sequences(df_test['Message_body'])
 padded_test = tf.keras.preprocessing.sequence.pad_sequences(sequences_test, padding='post', maxlen=max_len)
 y_test = encoder.transform(df_test['Label'])
 
-# --- Custom Transformer Components ---
 
+@tf.keras.utils.register_keras_serializable()
 class TransformerEmbedding(layers.Layer):
     """Combines Word Embeddings with Position Embeddings."""
     def __init__(self, maxlen, vocab_size, embed_dim, **kwargs):
@@ -40,7 +40,8 @@ class TransformerEmbedding(layers.Layer):
         positions = self.pos_emb(positions)
         x = self.token_emb(x)
         return x + positions
-
+    
+@tf.keras.utils.register_keras_serializable()
 class TransformerBlock(layers.Layer):
     """A standard Transformer Encoder Block."""
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1, **kwargs):
@@ -63,18 +64,16 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
 
-# --- Build the Transformer Model ---
-
 vocab_size = len(tokenizer.word_index) + 1
-embed_dim = 64    # Size of each word vector
-num_heads = 4    # Number of attention heads
-ff_dim = 64       # Hidden layer size in feed forward network inside transformer
+embed_dim = 64
+num_heads = 4
+ff_dim = 64
 
 model = tf.keras.Sequential([
     layers.Input(shape=(max_len,)),
     TransformerEmbedding(max_len, vocab_size, embed_dim),
     TransformerBlock(embed_dim, num_heads, ff_dim, rate=0.3),
-    layers.GlobalAveragePooling1D(), # Condenses sequence into a single vector
+    layers.GlobalAveragePooling1D(),
     layers.Dropout(0.2),
     layers.Dense(32, activation='relu'),
     layers.Dense(1, activation='sigmoid')
@@ -94,9 +93,9 @@ history_transformer = model.fit(
 )
 # Visualize
 
-tf.keras.models.save_model(model, 'Trasnformer_spam_mail_model.keras')
-joblib.dump(tokenizer, 'tokenizer.pkl')
-joblib.dump(encoder, 'encoder.pkl')
+model.save('transformer_spam_model.keras')
+joblib.dump(tokenizer, 'transformer_tokenizer.pkl')
+joblib.dump(encoder, 'transformer_encoder.pkl')
 
 plt.figure(figsize=(10, 5))
 plt.subplot(1, 2, 1)
