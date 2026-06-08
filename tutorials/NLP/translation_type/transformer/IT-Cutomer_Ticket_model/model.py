@@ -1,3 +1,4 @@
+import pickle
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -87,3 +88,17 @@ model.compile(optimizer="adam",loss="sparse_categorical_crossentropy", metrics=[
 model.summary()
 
 model.fit([encoder_input, decoder_input], decoder_output, epochs=20, batch_size=32, validation_split=0.2)
+
+model.save("ticket_transformer.keras")
+
+metadata = {
+    "input_tokenizer": input_tokenizer,
+    "target_tokenizer": target_tokenizer,
+    "encoder_max_len": encoder_max_len,
+    "decoder_max_len": decoder_max_len
+}
+
+with open("ticket_transformer_metadata.pkl", "wb") as f:
+    pickle.dump(metadata, f)
+
+print("Saved Successfully")
