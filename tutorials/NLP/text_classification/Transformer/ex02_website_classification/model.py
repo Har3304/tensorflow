@@ -92,3 +92,12 @@ model.compile(loss='categorical_crossentropy', optimizer=tf.keras.optimizers.Ada
 model.fit(X_train, y_train, validation_data=(X_val, y_val), verbose=1, epochs=200, batch_size=32, callbacks=[callback])
 
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
+import pickle
+model.save('website_classification.keras')
+with open('wensite_classification_tokenizer.pkl', 'wb') as f:
+  pickle.dump(tokenizer, f)
+class_names = list(pd.get_dummies(df['Category']).columns)
+
+with open('class_names.pkl', 'wb') as f:
+  pickle.dump(class_names, f)
+
